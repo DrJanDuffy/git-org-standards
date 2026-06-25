@@ -136,8 +136,10 @@ function Copy-Templates {
         "workflows\sync-standards.yml"
     )
     foreach ($rel in $githubFiles) {
+        $src = Join-Path $TemplatesDir ".github\$rel"
+        $dst = Join-Path $Dest ".github\$rel"
         $force = $rel -in @("dependabot.yml", "workflows\sync-standards.yml")
-        if (Copy-FileIfMissing -Src (Join-Path $TemplatesDir ".github\$rel") -Dst (Join-Path $Dest ".github\$rel") -Force:$force) { $changed = $true }
+        if (Copy-FileIfMissing -Src $src -Dst $dst -Force:$force) { $changed = $true }
     }
 
     $claudeFiles = @(
