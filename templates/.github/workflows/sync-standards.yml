@@ -1,0 +1,22 @@
+name: Sync Org Standards
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1' # Mondays 9am UTC
+
+jobs:
+  check-standards:
+    name: Verify standards files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required files
+        run: |
+          missing=0
+          for f in CLAUDE.md AGENTS.md CONTRIBUTING.md .github/pull_request_template.md; do
+            if [ ! -f "$f" ]; then echo "MISSING: $f"; missing=1; fi
+          done
+          if [ $missing -eq 1 ]; then exit 1; fi
+          echo "All standards files present"
