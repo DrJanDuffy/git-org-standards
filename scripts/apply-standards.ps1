@@ -17,10 +17,19 @@ param(
     [string]$LocalRoot = ""
 )
 
+function Invoke-Git {
+    param([string[]]$Args)
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    & git @Args 2>&1 | Out-Null
+    $code = $LASTEXITCODE
+    $ErrorActionPreference = $prev
+    return $code
+}
+
 $ErrorActionPreference = "Stop"
 
 $AllRepos = @(
-    "git-org-standards",
     "centennialhillshomesforsale",
     "StickStrick.com",
     "antigravity-lead-agent",
@@ -168,8 +177,7 @@ function Ensure-Clone {
     if ($DryRun) { return $true }
 
     New-Item -ItemType Directory -Force -Path (Split-Path $RepoPath -Parent) | Out-Null
-    git clone --depth 1 $cloneUrl $RepoPath 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) {
+    if ((Invoke-Git clone --depth 1 $cloneUrl $RepoPath) -ne 0) {
         New-Item -ItemType Directory -Force -Path $RepoPath | Out-Null
         Push-Location $RepoPath
         git init -b main
@@ -236,11 +244,7 @@ foreach ($repoName in $AllRepos) {
                 git checkout -b main
                 $branch = "main"
             }
-            $prevEAP = $ErrorActionPreference
-            $ErrorActionPreference = "Continue"
-            git push -u origin $branch 2>&1 | Out-Null
-            $pushOk = ($LASTEXITCODE -eq 0)
-            $ErrorActionPreference = $prevEAP
+            $pushOk = (Invoke-Git push -u origin $branch) -eq 0
             if (-not $pushOk) {
                 Write-Log "Push failed for $repoName - NOT force-pushing. Fix conflicts manually." "ERROR"
                 $results += [PSCustomObject]@{ Repo = $repoName; Status = "push-failed"; Branch = $branch }
