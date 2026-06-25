@@ -25,14 +25,31 @@ Based on:
 ## Apply to All Repos
 
 ```powershell
-# Dry run
+# Dry run (safe — no pushes)
 .\scripts\apply-standards.ps1 -DryRun
 
-# Apply to all 12 repos
+# Apply to all repos (additive only, no branch rename)
 .\scripts\apply-standards.ps1
 
 # Single repo
 .\scripts\apply-standards.ps1 -Repo centennialhillshomesforsale
+
+# Use local clones instead of temp dir
+.\scripts\apply-standards.ps1 -LocalRoot C:\Users\geneb\projects
+
+# DANGER: rename master→main (update Vercel prod branch first!)
+.\scripts\apply-standards.ps1 -RenameBranches
+```
+
+## Global Git Config
+
+```powershell
+# Safe settings (default branch, fetch prune, aliases)
+.\scripts\setup-global-git.ps1
+
+# Verify GPG signing before enabling
+.\scripts\verify-gpg-signing.ps1
+.\scripts\setup-global-git.ps1 -EnableSigning
 ```
 
 ## Boris Cherny Loops (Claude Code)
