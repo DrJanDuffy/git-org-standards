@@ -236,8 +236,12 @@ foreach ($repoName in $AllRepos) {
                 git checkout -b main
                 $branch = "main"
             }
-            git push -u origin $branch 2>&1
-            if ($LASTEXITCODE -ne 0) {
+            $prevEAP = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            git push -u origin $branch 2>&1 | Out-Null
+            $pushOk = ($LASTEXITCODE -eq 0)
+            $ErrorActionPreference = $prevEAP
+            if (-not $pushOk) {
                 Write-Log "Push failed for $repoName - NOT force-pushing. Fix conflicts manually." "ERROR"
                 $results += [PSCustomObject]@{ Repo = $repoName; Status = "push-failed"; Branch = $branch }
                 continue
