@@ -18,10 +18,10 @@ param(
 )
 
 function Invoke-Git {
-    param([string[]]$Args)
+    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$GitArguments)
     $prev = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
-    & git @Args 2>&1 | Out-Null
+    & git @GitArguments 2>&1 | Out-Null
     $code = $LASTEXITCODE
     $ErrorActionPreference = $prev
     return $code
@@ -161,8 +161,14 @@ function Copy-Templates {
 
 function Get-RepoPath {
     param([string]$RepoName)
-    if ($LocalRoot) {
-        $local = Join-Path $LocalRoot $RepoName
+    $searchRoots = @()
+    if ($LocalRoot) { $searchRoots += $LocalRoot }
+    $searchRoots += @(
+        "C:\Users\geneb\projects",
+        "C:\Users\geneb"
+    )
+    foreach ($root in $searchRoots) {
+        $local = Join-Path $root $RepoName
         if (Test-Path (Join-Path $local ".git")) { return $local }
     }
     return Join-Path $WorkDir $RepoName
@@ -178,11 +184,8 @@ function Ensure-Clone {
 
     New-Item -ItemType Directory -Force -Path (Split-Path $RepoPath -Parent) | Out-Null
     if ((Invoke-Git clone --depth 1 $cloneUrl $RepoPath) -ne 0) {
-        New-Item -ItemType Directory -Force -Path $RepoPath | Out-Null
-        Push-Location $RepoPath
-        git init -b main
-        git remote add origin $cloneUrl
-        Pop-Location
+        Write-Log "Clone failed for $RepoName - skipping" "ERROR"
+        return $false
     }
     return $true
 }
